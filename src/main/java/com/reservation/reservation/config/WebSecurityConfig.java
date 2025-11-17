@@ -1,5 +1,7 @@
 package com.reservation.reservation.config;
 
+import com.reservation.reservation.security.AuthEntryPointJwt;
+import com.reservation.reservation.security.JwtRequestFilter;
 import com.reservation.reservation.security.UserDetailsServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -11,18 +13,23 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity(prePostEnabled = true)
+@EnableMethodSecurity(prePostEnabled = true) //Enable @PreAuthorize
 @RequiredArgsConstructor
 public class WebSecurityConfig {
 
     private final UserDetailsServiceImpl userDetailsService;
+    private final AuthEntryPointJwt unauthorizedHandler;
+    private final JwtRequestFilter jwtRequestFilter;
 
     // Share bean encryption password to UserService can it inject
     @Bean
@@ -46,27 +53,56 @@ public class WebSecurityConfig {
         return authConfig.getAuthenticationManager();
     }
 
+    // Main security filter
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+                // Disable CSRF, because using API
                 .csrf(AbstractHttpConfigurer::disable)
-
-                // ZMIANA: Przechodzimy na API bezstanowe (stateless) - typowe dla REST API i JWT
-                // Spring nie będzie już tworzył sesji HTTP (JSESSIONID)
+                .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
+                        // Allow all to endpoint /api/auth/**
+                        .requestMatchers("/api/auth/login").permitAll()
+                        // Allow all to console h2
                         .requestMatchers("/h2-console/**").permitAll()
+                        // Allow to /api/services/** only for Admin
                         .requestMatchers("/api/services/**").hasRole("ADMIN")
+                        //All else requests must be authenticated
                         .anyRequest().authenticated()
                 );
 
         http.authenticationProvider(authenticationProvider());
-
-        http.headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()));
+        http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+        http.headers(headers -> headers.frameOptions(
+                HeadersConfigurer.FrameOptionsConfig::sameOrigin));
 
         return http.build();
     }
-
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
