@@ -23,13 +23,13 @@ public class ServiceController {
     }
 
     @PostMapping
-    @PreAuthorize(("hasRole('ADMIN')"))
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Service> createService(@RequestBody CreateServiceRequest request) {
         return ResponseEntity.ok(serviceService.createService(request));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN'")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> deleteService(@PathVariable Long id) {
         serviceService.deleteService(id);
         return ResponseEntity.ok("Service deactivated successfully");

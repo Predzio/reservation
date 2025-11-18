@@ -70,7 +70,7 @@ public class WebSecurityConfig {
                         // Allow all to GET method to endpoint /api/services/**
                         .requestMatchers(HttpMethod.GET, "/api/services/**").permitAll()
                         // Allow to /api/services/** only for Admin
-                        .requestMatchers("/api/services/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/services/**").hasRole("ADMIN")
                         // All else requests must be authenticated
                         .anyRequest().authenticated()
                 );
