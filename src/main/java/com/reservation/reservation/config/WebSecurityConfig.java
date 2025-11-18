@@ -6,6 +6,7 @@ import com.reservation.reservation.security.UserDetailsServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -63,12 +64,14 @@ public class WebSecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // Allow all to endpoint /api/auth/**
-                        .requestMatchers("/api/auth/login").permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
                         // Allow all to console h2
                         .requestMatchers("/h2-console/**").permitAll()
+                        // Allow all to GET method to endpoint /api/services/**
+                        .requestMatchers(HttpMethod.GET, "/api/services/**").permitAll()
                         // Allow to /api/services/** only for Admin
                         .requestMatchers("/api/services/**").hasRole("ADMIN")
-                        //All else requests must be authenticated
+                        // All else requests must be authenticated
                         .anyRequest().authenticated()
                 );
 
