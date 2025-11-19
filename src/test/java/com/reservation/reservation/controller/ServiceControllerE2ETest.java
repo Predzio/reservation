@@ -105,7 +105,7 @@ class ServiceControllerE2ETest {
                         // Brak nagłówka Authorization
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestJson))
-                .andExpect(status().isUnauthorized()); 
+                .andExpect(status().isUnauthorized());
 
 
         // Scenario 4: All should be see a service list (200 OK)
