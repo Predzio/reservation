@@ -71,6 +71,9 @@ public class WebSecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/services/**").permitAll()
                         // Allow to /api/services/** only for Admin
                         .requestMatchers(HttpMethod.POST, "/api/services/**").hasRole("ADMIN")
+                        // Allow to Swagger
+                        .requestMatchers("/swagger-ui/**").permitAll()
+                        .requestMatchers("/v3/api-docs/**").permitAll()
                         // All else requests must be authenticated
                         .anyRequest().authenticated()
                 );
