@@ -51,7 +51,7 @@ class AvailabilityControllerTest {
         request.setEndTime(LocalDateTime.now().plusDays(1).plusHours(4));
 
         when(availabilityService.createAvailability(any(), anyString())).thenReturn(new Availability());
-        
+
         mockMvc.perform(post("/api/availabilities")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
