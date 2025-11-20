@@ -38,6 +38,7 @@ public class UserService {
         if(userRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Error: Email is already in use!");
         }
+        
         User user = User.builder()
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
