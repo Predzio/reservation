@@ -16,7 +16,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AvailabilityController {
 
-    private AvailabilityService availabilityService;
+    private final AvailabilityService availabilityService;
 
     @PostMapping
     @PreAuthorize("hasRole('DOCTOR')")
