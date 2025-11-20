@@ -42,14 +42,14 @@ public class DataInitializer implements CommandLineRunner {
         if(!userRepository.existsByEmail(doctorEmail)) {
             log.info("Creating initial DOCTOR user...");
             final String doctorPassword = "dxxxxx0xxxxxxxxnxxxxzDxxxxxklmnoprst";
-            User admin = new User(
-                    adminEmail,
+            User doctor = new User(
+                    doctorEmail,
                     passwordEncoder.encode(doctorPassword),
                     "Andrew",
                     "Gold",
                     Set.of(Role.ROLE_DOCTOR)
             );
-            userRepository.save(admin);
+            userRepository.save(doctor);
 
             log.info("DOCTOR user created successfully.");
         } else {
