@@ -44,5 +44,5 @@ public class AvailabilityController {
         availabilityService.deleteAvailability(id, email);
         return ResponseEntity.ok("Slot deleted");
     }
-    
+
 }
