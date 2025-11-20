@@ -20,6 +20,8 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         final String adminEmail = "admin@company.com";
+        final String doctorEmail = "doctor@company.com";
+
         if(!userRepository.existsByEmail(adminEmail)) {
             log.info("Creating initial ADMIN user...");
             final String adminPassword = "dxxxxx0xxxxxxxxnxxxxzDxxxxxfxxxxxxd";
@@ -35,6 +37,23 @@ public class DataInitializer implements CommandLineRunner {
             log.info("ADMIN user created successfully.");
         } else {
             log.info("ADMIN user already exists.");
+        }
+
+        if(!userRepository.existsByEmail(doctorEmail)) {
+            log.info("Creating initial DOCTOR user...");
+            final String doctorPassword = "dxxxxx0xxxxxxxxnxxxxzDxxxxxklmnoprst";
+            User doctor = new User(
+                    doctorEmail,
+                    passwordEncoder.encode(doctorPassword),
+                    "Andrew",
+                    "Gold",
+                    Set.of(Role.ROLE_DOCTOR)
+            );
+            userRepository.save(doctor);
+
+            log.info("DOCTOR user created successfully.");
+        } else {
+            log.info("DOCTOR user already exists.");
         }
     }
 }
