@@ -25,6 +25,7 @@ public class User {
 
     private String firstName;
     private String lastName;
+    private String specialization;
 
     // Store collection roles as "STRING" not a number
     @ElementCollection(fetch = FetchType.EAGER)
