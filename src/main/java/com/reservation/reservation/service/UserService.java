@@ -38,14 +38,14 @@ public class UserService {
         if(userRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Error: Email is already in use!");
         }
-
-        User user = new User(
-                request.getEmail(),
-                passwordEncoder.encode(request.getPassword()),
-                request.getFirstName(),
-                request.getLastName(),
-                Set.of(Role.ROLE_DOCTOR)
-        );
+        User user = User.builder()
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .specialization(request.getSpecialization())
+                .roles(Set.of(Role.ROLE_DOCTOR))
+                .build();
 
         return userRepository.save(user);
     }
