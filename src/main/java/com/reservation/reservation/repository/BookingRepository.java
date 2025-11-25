@@ -14,7 +14,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     List<Booking> findAllByPatientIdOrderByStartTimeDesc(Long patientId);
 
     // List of reservations for doctor
-    List<Booking> findAllByDoctorIdAndStartTimeAfterOrderByStartTimeAsc(Long doctor);
+    List<Booking> findAllByDoctorIdAndStartTimeAfterOrderByStartTimeAsc(Long doctor, LocalDateTime now);
 
     // Check conflicts
     @Query("""
