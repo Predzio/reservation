@@ -1,6 +1,7 @@
 package com.reservation.reservation.service;
 
 import com.reservation.reservation.dto.request.CreateBookingRequest;
+import com.reservation.reservation.dto.response.BookingDTO;
 import com.reservation.reservation.model.Booking;
 import com.reservation.reservation.model.BookingStatus;
 import com.reservation.reservation.model.User;
@@ -11,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -22,7 +24,7 @@ public class BookingService {
     private final AvailabilityRepository availabilityRepository;
 
     @Transactional
-    public Booking createBooking(CreateBookingRequest request, String patientEmail) {
+    public BookingDTO createBooking(CreateBookingRequest request, String patientEmail) {
         User patient = userRepository.findByEmail(patientEmail)
                 .orElseThrow(() -> new RuntimeException("Patient not found"));
         User doctor = userRepository.findById(request.getDoctorId())
@@ -63,13 +65,37 @@ public class BookingService {
                 .status(BookingStatus.CONFIRMED)
                 .build();
 
-        return bookingRepository.save(booking);
+        Booking savedBooking = bookingRepository.save(booking);
+
+        return  mapToDTO(savedBooking);
     }
 
-    public List<Booking> getMyBooking(String patientEmail) {
+    public List<BookingDTO> getMyBookings(String patientEmail) {
         User patient = userRepository.findByEmail(patientEmail).orElseThrow();
-
-        return bookingRepository.findAllByPatientIdOrderByStartTimeDesc(patient.getId());
+        List<Booking> bookings = bookingRepository.findAllByPatientIdOrderByStartTimeDesc(patient.getId());
+        return bookings.stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
     }
 
+    private BookingDTO mapToDTO(Booking booking) {
+        return BookingDTO.builder()
+                .id(booking.getId())
+                .startTime(booking.getStartTime())
+                .endTime(booking.getEndTime())
+                .status(booking.getStatus())
+                .serviceName(booking.getService().getName())
+                .doctor(new BookingDTO.DoctorSummary(
+                        booking.getDoctor().getId(),
+                        booking.getDoctor().getFirstName(),
+                        booking.getDoctor().getLastName(),
+                        booking.getDoctor().getSpecialization()
+                ))
+                .patient(new BookingDTO.PatientSummary(
+                        booking.getPatient().getId(),
+                        booking.getPatient().getFirstName(),
+                        booking.getPatient().getLastName()
+                ))
+                .build();
+    }
 }
