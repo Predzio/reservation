@@ -23,6 +23,7 @@ public class UserService {
 
     public List<DoctorDTO> getAllDoctors() {
         List<User> doctors = userRepository.findAllByRolesContaining(Role.ROLE_DOCTOR);
+        doctors.removeIf(user -> "admin@company.com".equals(user.getEmail()));
 
         return doctors.stream()
                 .map(doc -> new DoctorDTO(
