@@ -1,6 +1,7 @@
 package com.reservation.reservation.controller;
 
 import com.reservation.reservation.dto.request.CreateDoctorRequest;
+import com.reservation.reservation.dto.response.DoctorDTO;
 import com.reservation.reservation.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -10,11 +11,18 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
+
+    @GetMapping("/doctors")
+    public ResponseEntity<List<DoctorDTO>> getAllDoctors() {
+        return ResponseEntity.ok(userService.getAllDoctors());
+    }
 
     @PostMapping("/doctors")
     @PreAuthorize("hasRole('ADMIN')")
