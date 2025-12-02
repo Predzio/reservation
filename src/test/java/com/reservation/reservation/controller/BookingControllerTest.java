@@ -43,7 +43,7 @@ class BookingControllerTest {
     private UserDetailsServiceImpl userDetailsService;
     @MockitoBean
     private JwtRequestFilter jwtRequestFilter;
-    @MockitoBean 
+    @MockitoBean
     private AuthEntryPointJwt authEntryPointJwt;
 
     @Test
