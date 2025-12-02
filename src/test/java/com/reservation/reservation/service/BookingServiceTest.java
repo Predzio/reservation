@@ -2,9 +2,7 @@ package com.reservation.reservation.service;
 
 import com.reservation.reservation.dto.request.CreateBookingRequest;
 import com.reservation.reservation.dto.response.BookingDTO;
-import com.reservation.reservation.model.Booking;
-import com.reservation.reservation.model.Service;
-import com.reservation.reservation.model.User;
+import com.reservation.reservation.model.*;
 import com.reservation.reservation.repository.AvailabilityRepository;
 import com.reservation.reservation.repository.BookingRepository;
 import com.reservation.reservation.repository.ServiceRepository;
@@ -17,12 +15,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class BookingServiceTest {
@@ -91,6 +90,143 @@ public class BookingServiceTest {
                 bookingService.createBooking(request, "pat@t.com"));
 
         assertTrue(ex.getMessage().contains("The doctor is not available during these hours"));
+    }
+
+    @Test
+    void shouldReturnDoctorBookings() {
+        String doctorEmail = "doc@test.com";
+        User doctor = new User();
+        doctor.setId(1L);
+        doctor.setEmail(doctorEmail);
+
+        when(userRepository.findByEmail(doctorEmail)).thenReturn(Optional.of(doctor));
+
+        Booking booking = Booking.builder()
+                .id(100L)
+                .startTime(LocalDateTime.now().plusDays(1))
+                .endTime(LocalDateTime.now().plusDays(1).plusHours(1))
+                .status(BookingStatus.CONFIRMED)
+                .doctor(doctor)
+                .patient(new User("pat@t.com", "p", "P", "K", Set.of(Role.ROLE_PATIENT)))
+                .service(new Service("Test", 60, null))
+                .build();
+
+        when(bookingRepository.findAllByDoctorIdAndStartTimeAfterOrderByStartTimeAsc(eq(1L), any()))
+                .thenReturn(List.of(booking));
+
+        List<BookingDTO> result = bookingService.getDoctorBookings(doctorEmail);
+
+        assertEquals(1, result.size());
+        assertEquals(100L, result.get(0).getId());
+    }
+
+    @Test
+    void shouldCancelBookingAsPatient() {
+        Long bookingId = 10L;
+        String patientEmail = "patient@test.com";
+
+        User patient = new User();
+        patient.setId(5L);
+        patient.setEmail(patientEmail);
+        patient.setRoles(Set.of(Role.ROLE_PATIENT));
+        User doctor = new User();
+        doctor.setId(1L);
+
+        Booking booking = Booking.builder()
+                .id(bookingId)
+                .patient(patient)
+                .doctor(doctor)
+                .startTime(LocalDateTime.now().plusDays(2))
+                .status(BookingStatus.CONFIRMED)
+                .build();
+
+        when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(booking));
+        when(userRepository.findByEmail(patientEmail)).thenReturn(Optional.of(patient));
+
+        bookingService.cancelBooking(bookingId, patientEmail);
+
+        assertEquals(BookingStatus.CANCELLED, booking.getStatus());
+        verify(bookingRepository).save(booking);
+    }
+
+    @Test
+    void shouldThrowWhenUnauthorizedUserTriesToCancel() {
+        Long bookingId = 10L;
+        String hackerEmail = "hacker@test.com";
+
+        User patient = new User(); patient.setId(5L); // Owner
+        patient.setRoles(Set.of(Role.ROLE_PATIENT));
+        User doctor = new User(); doctor.setId(1L);
+
+        User hacker = new User(); hacker.setId(999L); // Other
+        hacker.setEmail(hackerEmail);
+        hacker.setRoles(Set.of(Role.ROLE_PATIENT));
+
+        Booking booking = Booking.builder()
+                .id(bookingId)
+                .patient(patient)
+                .doctor(doctor)
+                .status(BookingStatus.CONFIRMED)
+                .build();
+
+        when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(booking));
+        when(userRepository.findByEmail(hackerEmail)).thenReturn(Optional.of(hacker));
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () ->
+                bookingService.cancelBooking(bookingId, hackerEmail)
+        );
+        assertEquals("You don't have permission on this appointment", ex.getMessage());
+
+        assertNotEquals(BookingStatus.CANCELLED, booking.getStatus());
+        verify(bookingRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldThrowWhenBookingIsAlreadyCancelled() {
+        Long bookingId = 10L;
+        String email = "pat@test.com";
+        User patient = new User();
+        patient.setId(5L);
+        patient.setRoles(Set.of(Role.ROLE_PATIENT));
+
+        Booking booking = Booking.builder()
+                .id(bookingId)
+                .patient(patient)
+                .doctor(new User())
+                .status(BookingStatus.CANCELLED)
+                .build();
+        booking.getDoctor().setId(2L);
+
+        when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(booking));
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(patient));
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () ->
+                bookingService.cancelBooking(bookingId, email)
+        );
+        assertEquals("This appointment has already been cancelled", ex.getMessage());
+    }
+
+    @Test
+    void shouldThrowWhenCancellingPastBooking() {
+        User patient = new User();
+        patient.setId(5L);
+        patient.setRoles(Set.of(Role.ROLE_PATIENT));
+
+        Booking booking = Booking.builder()
+                .id(1L)
+                .patient(patient)
+                .doctor(new User())
+                .startTime(LocalDateTime.now().minusDays(1))
+                .status(BookingStatus.CONFIRMED)
+                .build();
+        booking.getDoctor().setId(2L);
+
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+        when(userRepository.findByEmail("pat@t.com")).thenReturn(Optional.of(patient));
+
+        assertThrows(RuntimeException.class, () ->
+                bookingService.cancelBooking(1L, "pat@t.com")
+        );
     }
 
 }
