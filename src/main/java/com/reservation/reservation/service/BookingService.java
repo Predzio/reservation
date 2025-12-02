@@ -4,12 +4,14 @@ import com.reservation.reservation.dto.request.CreateBookingRequest;
 import com.reservation.reservation.dto.response.BookingDTO;
 import com.reservation.reservation.model.Booking;
 import com.reservation.reservation.model.BookingStatus;
+import com.reservation.reservation.model.Role;
 import com.reservation.reservation.model.User;
 import com.reservation.reservation.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.awt.print.Book;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -22,6 +24,35 @@ public class BookingService {
     private final UserRepository userRepository;
     private final ServiceRepository serviceRepository;
     private final AvailabilityRepository availabilityRepository;
+
+    @Transactional
+    public void cancelBooking(Long bookingId, String currentUserEmail) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Reservation not found"));
+
+        User currentUser = userRepository.findByEmail(currentUserEmail)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Check - is this the patient/doctor/admin for this appointment?
+        boolean isPatient = booking.getPatient().getId().equals(currentUser.getId());
+        boolean isDoctor = booking.getDoctor().getId().equals(currentUser.getId());
+        boolean isAdmin = currentUser.getRoles().contains(Role.ROLE_ADMIN);
+
+        if(!isPatient && !isDoctor && !isAdmin) {
+            throw new RuntimeException("You don't have permission on this appointment");
+        }
+
+        if(booking.getStatus() == BookingStatus.CANCELLED) {
+            throw new RuntimeException("This appointment has already been cancelled");
+        }
+
+        if(booking.getStartTime().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("You cannot cancel an appointment that has already taken place");
+        }
+
+        booking.setStatus(BookingStatus.CANCELLED);
+        bookingRepository.save(booking);
+    }
 
     @Transactional
     public BookingDTO createBooking(CreateBookingRequest request, String patientEmail) {
@@ -68,6 +99,18 @@ public class BookingService {
         Booking savedBooking = bookingRepository.save(booking);
 
         return  mapToDTO(savedBooking);
+    }
+
+    public List<BookingDTO> getDoctorBookings(String doctorEmail) {
+        User doctor = userRepository.findByEmail(doctorEmail)
+                .orElseThrow(() -> new RuntimeException("Doctor not found"));
+
+        List<Booking> bookings = bookingRepository
+                .findAllByDoctorIdAndStartTimeAfterOrderByStartTimeAsc(doctor.getId(), LocalDateTime.now());
+
+        return bookings.stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
     }
 
     public List<BookingDTO> getMyBookings(String patientEmail) {

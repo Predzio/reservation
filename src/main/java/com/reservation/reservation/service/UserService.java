@@ -2,6 +2,7 @@ package com.reservation.reservation.service;
 
 import com.reservation.reservation.dto.request.CreateDoctorRequest;
 import com.reservation.reservation.dto.request.RegisterRequest;
+import com.reservation.reservation.dto.response.DoctorDTO;
 import com.reservation.reservation.model.Role;
 import com.reservation.reservation.model.User;
 import com.reservation.reservation.repository.UserRepository;
@@ -9,7 +10,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -17,6 +20,20 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+
+    public List<DoctorDTO> getAllDoctors() {
+        List<User> doctors = userRepository.findAllByRolesContaining(Role.ROLE_DOCTOR);
+        doctors.removeIf(user -> "admin@company.com".equals(user.getEmail()));
+
+        return doctors.stream()
+                .map(doc -> new DoctorDTO(
+                        doc.getId(),
+                        doc.getFirstName(),
+                        doc.getLastName(),
+                        doc.getSpecialization()
+                ))
+                .collect(Collectors.toList());
+    }
 
     public User registerNewPatient(RegisterRequest request) {
         if(userRepository.existsByEmail(request.getEmail())) {
@@ -50,4 +67,6 @@ public class UserService {
 
         return userRepository.save(user);
     }
+
+
 }

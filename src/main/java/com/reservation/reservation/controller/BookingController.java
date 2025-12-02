@@ -19,6 +19,26 @@ import java.util.List;
 public class BookingController {
     private final BookingService bookingService;
 
+    @GetMapping("/doctor-schedule")
+    @PreAuthorize("hasRole('DOCTOR')")
+    public ResponseEntity<List<BookingDTO>> getDoctorBookings() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        return ResponseEntity.ok(bookingService.getDoctorBookings(email));
+    }
+
+    @PatchMapping("/{id}/cancel")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> cancelBooking(@PathVariable Long id) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        try {
+            bookingService.cancelBooking(id, email);
+            return ResponseEntity.ok("Reservation has been cancelled");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
     @PostMapping
     @PreAuthorize("hasRole('PATIENT')")
     public ResponseEntity<?> createBooking(@RequestBody CreateBookingRequest request) {
