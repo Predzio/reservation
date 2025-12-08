@@ -3,10 +3,12 @@ package com.reservation.reservation.service;
 import com.reservation.reservation.dto.request.CreateDoctorRequest;
 import com.reservation.reservation.dto.request.RegisterRequest;
 import com.reservation.reservation.dto.response.DoctorDTO;
+import com.reservation.reservation.exception.BusinessException;
 import com.reservation.reservation.model.Role;
 import com.reservation.reservation.model.User;
 import com.reservation.reservation.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -37,7 +39,7 @@ public class UserService {
 
     public User registerNewPatient(RegisterRequest request) {
         if(userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Error: Email is already in use!");
+            throw new BusinessException("Error: Email is already in use!", HttpStatus.CONFLICT);
         }
 
         User user = new User(
@@ -53,7 +55,7 @@ public class UserService {
 
     public User createNewDoctor(CreateDoctorRequest request) {
         if(userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Error: Email is already in use!");
+            throw new BusinessException("Error: Email is already in use!", HttpStatus.CONFLICT);
         }
         
         User user = User.builder()
