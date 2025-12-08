@@ -2,12 +2,15 @@ package com.reservation.reservation.service;
 
 import com.reservation.reservation.dto.request.CreateBookingRequest;
 import com.reservation.reservation.dto.response.BookingDTO;
+import com.reservation.reservation.exception.BusinessException;
+import com.reservation.reservation.exception.ResourceNotFoundException;
 import com.reservation.reservation.model.Booking;
 import com.reservation.reservation.model.BookingStatus;
 import com.reservation.reservation.model.Role;
 import com.reservation.reservation.model.User;
 import com.reservation.reservation.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -57,14 +60,14 @@ public class BookingService {
     @Transactional
     public BookingDTO createBooking(CreateBookingRequest request, String patientEmail) {
         User patient = userRepository.findByEmail(patientEmail)
-                .orElseThrow(() -> new RuntimeException("Patient not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Patient not found"));
         User doctor = userRepository.findById(request.getDoctorId())
-                .orElseThrow(() -> new RuntimeException("Doctor not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Doctor not found"));
         com.reservation.reservation.model.Service service = serviceRepository.findById(request.getServiceId())
-                .orElseThrow(() -> new RuntimeException("Service not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Service not found"));
 
         if(!service.isActive()) {
-            throw new IllegalArgumentException("This service is currently unavailable");
+            throw new BusinessException("This service is currently unavailable");
         }
 
         LocalDateTime startTime = request.getStartTime();
@@ -76,7 +79,7 @@ public class BookingService {
         );
 
         if(!isDoctorAvailable) {
-            throw new IllegalArgumentException("The doctor is not available during these hours");
+            throw new BusinessException("The doctor is not available during these hours");
         }
 
         boolean isSlotTaken = bookingRepository.existsOverlappingBooking(
@@ -84,7 +87,7 @@ public class BookingService {
         );
 
         if(isSlotTaken) {
-            throw new IllegalArgumentException("This date is already booked by someone else!");
+            throw new BusinessException("This date is already booked by someone else!", HttpStatus.CONFLICT);
         }
 
         Booking booking = Booking.builder()
