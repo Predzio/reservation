@@ -1,6 +1,7 @@
 package com.reservation.reservation.service;
 
 import com.reservation.reservation.dto.request.CreateServiceRequest;
+import com.reservation.reservation.exception.ResourceNotFoundException;
 import com.reservation.reservation.model.Service;
 import com.reservation.reservation.repository.ServiceRepository;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +38,7 @@ public class ServiceService {
     // Deleting service (Soft Delete)
     public void deleteService(Long id) {
         Service service = serviceRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Service not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Service ID: " +id +" not exists"));
 
         service.setActive(false);
         serviceRepository.save(service);
