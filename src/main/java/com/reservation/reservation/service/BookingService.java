@@ -14,7 +14,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.awt.print.Book;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -31,10 +30,10 @@ public class BookingService {
     @Transactional
     public void cancelBooking(Long bookingId, String currentUserEmail) {
         Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new RuntimeException("Reservation not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Reservation not found"));
 
         User currentUser = userRepository.findByEmail(currentUserEmail)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         // Check - is this the patient/doctor/admin for this appointment?
         boolean isPatient = booking.getPatient().getId().equals(currentUser.getId());
@@ -42,15 +41,15 @@ public class BookingService {
         boolean isAdmin = currentUser.getRoles().contains(Role.ROLE_ADMIN);
 
         if(!isPatient && !isDoctor && !isAdmin) {
-            throw new RuntimeException("You don't have permission on this appointment");
+            throw new BusinessException("You don't have permission on this appointment", HttpStatus.FORBIDDEN);
         }
 
         if(booking.getStatus() == BookingStatus.CANCELLED) {
-            throw new RuntimeException("This appointment has already been cancelled");
+            throw new BusinessException("This appointment has already been cancelled");
         }
 
         if(booking.getStartTime().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("You cannot cancel an appointment that has already taken place");
+            throw new BusinessException("You cannot cancel an appointment that has already taken place");
         }
 
         booking.setStatus(BookingStatus.CANCELLED);
@@ -106,7 +105,7 @@ public class BookingService {
 
     public List<BookingDTO> getDoctorBookings(String doctorEmail) {
         User doctor = userRepository.findByEmail(doctorEmail)
-                .orElseThrow(() -> new RuntimeException("Doctor not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Doctor not found"));
 
         List<Booking> bookings = bookingRepository
                 .findAllByDoctorIdAndStartTimeAfterOrderByStartTimeAsc(doctor.getId(), LocalDateTime.now());
