@@ -85,5 +85,5 @@ public class MedicalRecordService {
                 .serviceName(record.getBooking().getService().getName())
                 .build();
     }
-    
+
 }
