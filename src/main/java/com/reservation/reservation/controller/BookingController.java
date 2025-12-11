@@ -10,7 +10,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import java.awt.print.Book;
 import java.util.List;
 
 @RestController
@@ -31,12 +30,9 @@ public class BookingController {
     public ResponseEntity<?> cancelBooking(@PathVariable Long id) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
 
-        try {
-            bookingService.cancelBooking(id, email);
-            return ResponseEntity.ok("Reservation has been cancelled");
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        bookingService.cancelBooking(id, email);
+
+        return ResponseEntity.ok("Reservation has been cancelled");
     }
 
     @PostMapping
@@ -44,13 +40,9 @@ public class BookingController {
     public ResponseEntity<?> createBooking(@RequestBody CreateBookingRequest request) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
 
-        try {
-            BookingDTO bookingDTO = bookingService.createBooking(request, email);
+        BookingDTO bookingDTO = bookingService.createBooking(request, email);
 
-            return ResponseEntity.ok(bookingDTO);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        return ResponseEntity.ok(bookingDTO);
     }
 
     @GetMapping("/my")

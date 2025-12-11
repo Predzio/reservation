@@ -23,12 +23,9 @@ public class AvailabilityController {
     public ResponseEntity<?> createAvailability(@RequestBody CreateAvailabilityRequest request) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
 
-        try {
-            Availability created = availabilityService.createAvailability(request, email);
-            return ResponseEntity.ok(created);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        Availability created = availabilityService.createAvailability(request, email);
+
+        return ResponseEntity.ok(created);
     }
 
     @GetMapping("/doctor/{doctorId}")

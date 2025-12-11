@@ -2,16 +2,18 @@ package com.reservation.reservation.service;
 
 import com.reservation.reservation.dto.request.CreateBookingRequest;
 import com.reservation.reservation.dto.response.BookingDTO;
+import com.reservation.reservation.exception.BusinessException;
+import com.reservation.reservation.exception.ResourceNotFoundException;
 import com.reservation.reservation.model.Booking;
 import com.reservation.reservation.model.BookingStatus;
 import com.reservation.reservation.model.Role;
 import com.reservation.reservation.model.User;
 import com.reservation.reservation.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.awt.print.Book;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -28,10 +30,10 @@ public class BookingService {
     @Transactional
     public void cancelBooking(Long bookingId, String currentUserEmail) {
         Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new RuntimeException("Reservation not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Reservation not found"));
 
         User currentUser = userRepository.findByEmail(currentUserEmail)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         // Check - is this the patient/doctor/admin for this appointment?
         boolean isPatient = booking.getPatient().getId().equals(currentUser.getId());
@@ -39,15 +41,15 @@ public class BookingService {
         boolean isAdmin = currentUser.getRoles().contains(Role.ROLE_ADMIN);
 
         if(!isPatient && !isDoctor && !isAdmin) {
-            throw new RuntimeException("You don't have permission on this appointment");
+            throw new BusinessException("You don't have permission on this appointment", HttpStatus.FORBIDDEN);
         }
 
         if(booking.getStatus() == BookingStatus.CANCELLED) {
-            throw new RuntimeException("This appointment has already been cancelled");
+            throw new BusinessException("This appointment has already been cancelled");
         }
 
         if(booking.getStartTime().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("You cannot cancel an appointment that has already taken place");
+            throw new BusinessException("You cannot cancel an appointment that has already taken place");
         }
 
         booking.setStatus(BookingStatus.CANCELLED);
@@ -57,14 +59,14 @@ public class BookingService {
     @Transactional
     public BookingDTO createBooking(CreateBookingRequest request, String patientEmail) {
         User patient = userRepository.findByEmail(patientEmail)
-                .orElseThrow(() -> new RuntimeException("Patient not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Patient not found"));
         User doctor = userRepository.findById(request.getDoctorId())
-                .orElseThrow(() -> new RuntimeException("Doctor not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Doctor not found"));
         com.reservation.reservation.model.Service service = serviceRepository.findById(request.getServiceId())
-                .orElseThrow(() -> new RuntimeException("Service not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Service not found"));
 
         if(!service.isActive()) {
-            throw new IllegalArgumentException("This service is currently unavailable");
+            throw new BusinessException("This service is currently unavailable");
         }
 
         LocalDateTime startTime = request.getStartTime();
@@ -76,7 +78,7 @@ public class BookingService {
         );
 
         if(!isDoctorAvailable) {
-            throw new IllegalArgumentException("The doctor is not available during these hours");
+            throw new BusinessException("The doctor is not available during these hours");
         }
 
         boolean isSlotTaken = bookingRepository.existsOverlappingBooking(
@@ -84,7 +86,7 @@ public class BookingService {
         );
 
         if(isSlotTaken) {
-            throw new IllegalArgumentException("This date is already booked by someone else!");
+            throw new BusinessException("This date is already booked by someone else!", HttpStatus.CONFLICT);
         }
 
         Booking booking = Booking.builder()
@@ -103,7 +105,7 @@ public class BookingService {
 
     public List<BookingDTO> getDoctorBookings(String doctorEmail) {
         User doctor = userRepository.findByEmail(doctorEmail)
-                .orElseThrow(() -> new RuntimeException("Doctor not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Doctor not found"));
 
         List<Booking> bookings = bookingRepository
                 .findAllByDoctorIdAndStartTimeAfterOrderByStartTimeAsc(doctor.getId(), LocalDateTime.now());
