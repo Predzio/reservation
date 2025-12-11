@@ -28,7 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(MedicalRecordController.class)
 @AutoConfigureMockMvc(addFilters = false)
-public class MedicalControllerTest {
+public class MedicalRecordControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
