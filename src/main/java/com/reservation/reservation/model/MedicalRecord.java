@@ -25,7 +25,7 @@ public class MedicalRecord {
     private String treatment;
 
     @Column(length = 2000)
-    private String recommendation;
+    private String recommendations;
 
     private LocalDateTime createdAt;
 
