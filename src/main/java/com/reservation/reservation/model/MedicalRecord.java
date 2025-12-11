@@ -32,5 +32,5 @@ public class MedicalRecord {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "booking_id", nullable = false, unique = true)
     private Booking booking;
-    
+
 }
