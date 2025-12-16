@@ -34,6 +34,8 @@ public class BookingServiceTest {
     private ServiceRepository serviceRepository;
     @Mock
     private AvailabilityRepository availabilityRepository;
+    @Mock
+    private NotificationService notificationService;
     @InjectMocks
     private BookingService bookingService;
 
@@ -71,6 +73,8 @@ public class BookingServiceTest {
         assertNotNull(result);
         assertEquals(123L, result.getId());
         assertEquals("Doc", result.getDoctor().getFirstName());
+
+        verify(notificationService, times(1)).sendBookingConfirmation(any());
     }
 
     @Test
@@ -147,6 +151,7 @@ public class BookingServiceTest {
 
         assertEquals(BookingStatus.CANCELLED, booking.getStatus());
         verify(bookingRepository).save(booking);
+        verify(notificationService, times(1)).sendBookingCancellation(any());
     }
 
     @Test
