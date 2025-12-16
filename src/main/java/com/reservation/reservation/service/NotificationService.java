@@ -40,6 +40,23 @@ public class NotificationService {
         sendEmail(patientEmail, subject, text);
     }
 
+    @Async
+    public void sendBookingCancellation(Booking booking) {
+        String patientEmail = booking.getPatient().getEmail();
+        String subject = "Anulowanie wizyty";
+        String text = String.format("""
+                Witaj %s.
+                
+                Twoja wizyta z dnia %s została anulowana.
+                Przepraszamy za niedogodności.
+                """,
+                booking.getPatient().getFirstName(),
+                booking.getStartTime().toString()
+        );
+
+        sendEmail(patientEmail, subject, text);
+    }
+
     private void sendEmail(String to, String subject, String text) {
         try {
             log.info("Sending mail to: {}", to);
@@ -56,5 +73,5 @@ public class NotificationService {
             log.error("Error during sending mail to: " +to, e);
         }
     }
-    
+
 }

@@ -26,6 +26,7 @@ public class BookingService {
     private final UserRepository userRepository;
     private final ServiceRepository serviceRepository;
     private final AvailabilityRepository availabilityRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public void cancelBooking(Long bookingId, String currentUserEmail) {
@@ -53,6 +54,9 @@ public class BookingService {
         }
 
         booking.setStatus(BookingStatus.CANCELLED);
+
+        notificationService.sendBookingCancellation(booking);
+
         bookingRepository.save(booking);
     }
 
@@ -99,6 +103,8 @@ public class BookingService {
                 .build();
 
         Booking savedBooking = bookingRepository.save(booking);
+
+        notificationService.sendBookingConfirmation(savedBooking);
 
         return  mapToDTO(savedBooking);
     }
