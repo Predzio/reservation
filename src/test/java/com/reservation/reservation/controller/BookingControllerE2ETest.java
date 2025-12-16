@@ -12,6 +12,7 @@ import com.reservation.reservation.repository.BookingRepository;
 import com.reservation.reservation.repository.ServiceRepository;
 import com.reservation.reservation.repository.UserRepository;
 import com.reservation.reservation.security.JwtTokenService;
+import com.reservation.reservation.service.NotificationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,13 +30,15 @@ import java.time.LocalDateTime;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-class BookingE2ETest {
+class BookingControllerE2ETest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -51,6 +54,8 @@ class BookingE2ETest {
     private JwtTokenService jwtTokenService;
     @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private NotificationService notificationService;
 
     private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
     private String patientToken;
@@ -96,6 +101,8 @@ class BookingE2ETest {
 
         // Check in base
         assertEquals(1, bookingRepository.count());
+
+        verify(notificationService).sendBookingConfirmation(any());
     }
 
     private String generateToken(User user) {
