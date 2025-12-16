@@ -110,7 +110,7 @@ class MedicalRecordE2ETest {
                 .andExpect(jsonPath("$[0].diagnosis").value("Zapalenie płuc"))
                 .andExpect(jsonPath("$[0].doctorName").exists());
     }
-    
+
     private String generateToken(User user) {
         var authorities = user.getRoles().stream().map(r -> new SimpleGrantedAuthority(r.name())).toList();
         UserDetails u = new org.springframework.security.core.userdetails.User(user.getEmail(), "pass", authorities);
