@@ -2,6 +2,7 @@ package com.reservation.reservation.service;
 
 import com.reservation.reservation.dto.request.CreateBookingRequest;
 import com.reservation.reservation.dto.response.BookingDTO;
+import com.reservation.reservation.exception.BusinessException;
 import com.reservation.reservation.model.*;
 import com.reservation.reservation.repository.AvailabilityRepository;
 import com.reservation.reservation.repository.BookingRepository;
@@ -90,7 +91,7 @@ public class BookingServiceTest {
         // DOCTOR UNAVAILABLE (false)
         when(availabilityRepository.existsOverlappingSlot(any(), any(), any())).thenReturn(false);
 
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () ->
+        BusinessException ex = assertThrows(BusinessException.class, () ->
                 bookingService.createBooking(request, "pat@t.com"));
 
         assertTrue(ex.getMessage().contains("The doctor is not available during these hours"));
