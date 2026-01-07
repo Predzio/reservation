@@ -104,7 +104,7 @@ class ReviewServiceTest {
     void shouldThrowWhenReviewAlreadyExists() {
         User patient = new User();
         patient.setEmail("jan@test.com");
-        
+
         Booking booking = Booking.builder()
                 .status(BookingStatus.COMPLETED)
                 .patient(patient).build();

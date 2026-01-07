@@ -17,7 +17,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ReviewController {
 
-    private ReviewService reviewService;
+    private final ReviewService reviewService;
 
     @PostMapping("/booking/{bookingId}")
     @PreAuthorize("hasAuthority('ROLE_PATIENT')")
